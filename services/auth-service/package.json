@@ -9,6 +9,12 @@
     "dev": "npx nodemon server.js",
     "start": "node server.js"
   },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "<rootDir>/test/setup.js"
+    ],
+    "testEnvironment": "node"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
