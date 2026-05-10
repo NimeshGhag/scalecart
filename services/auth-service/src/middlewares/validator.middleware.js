@@ -16,13 +16,19 @@ const registerUserValidations = [
     .withMessage("name must be at least 3 characters long"),
 
   body("email")
-  .isEmail()
-  .withMessage("Invalid email address"),
+    .notEmpty()
+    .withMessage("Email is required")
+    .bail()
+    .isEmail()
+    .withMessage("Invalid email address"),
 
   body("password")
+    .notEmpty()
+    .withMessage("Password is required")
+    .bail()
     .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters long"),
-  
+
   body("role")
     .optional()
     .isIn(["user", "seller"])
@@ -30,6 +36,25 @@ const registerUserValidations = [
   respondWithValidationErrors,
 ];
 
+const loginUserValidations = [
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .bail()
+    .isEmail()
+    .withMessage("Invalid email address"),
+
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required")
+    .bail()
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters long"),
+
+  respondWithValidationErrors,
+];
+
 module.exports = {
   registerUserValidations,
+  loginUserValidations,
 };
