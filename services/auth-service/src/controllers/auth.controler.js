@@ -20,7 +20,7 @@ const registerController = async (req, res) => {
       name,
       email,
       password: hashPassword,
-      role,
+      role: role || "user",
     });
 
     return res.status(201).json({
