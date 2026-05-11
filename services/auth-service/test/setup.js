@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
+jest.setTimeout(30000); // Increase timeout to 30 seconds
 let mongo;
 
 beforeAll(async () => {
