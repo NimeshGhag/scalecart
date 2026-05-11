@@ -97,6 +97,7 @@ const loginController = async (req, res) => {
 const getCurrentUserController = async (req, res) => {
   return res.status(200).json({
     message: "Current user fetched successfully",
+    
     user: req.user,
   });
 };
