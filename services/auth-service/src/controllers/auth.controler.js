@@ -1,6 +1,7 @@
 const userModel = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const JWT = require("jsonwebtoken");
+const redis = require("../db/redis");
 
 const registerController = async (req, res) => {
   const { name, email, password, role } = req.body;
@@ -97,13 +98,38 @@ const loginController = async (req, res) => {
 const getCurrentUserController = async (req, res) => {
   return res.status(200).json({
     message: "Current user fetched successfully",
-    
+
     user: req.user,
   });
+};
+
+const logutController = async (req, res) => {
+  try {
+    const { accessToken } = req.cookies;
+
+    if (accessToken) {
+      await redis.set(`blacklist${accessToken}`, true, "EX", 24 * 60 * 60);
+    }
+
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: true,
+    });
+
+    return res.status(200).json({
+      message: "Logout successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
 };
 
 module.exports = {
   registerController,
   loginController,
   getCurrentUserController,
+  logutController,
 };
