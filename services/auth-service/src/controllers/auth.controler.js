@@ -2,6 +2,7 @@ const userModel = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const JWT = require("jsonwebtoken");
 const redis = require("../db/redis");
+const { sendEmail } = require("../utils/email.service");
 
 const registerController = async (req, res) => {
   const { name, email, password, role } = req.body;
@@ -23,6 +24,31 @@ const registerController = async (req, res) => {
       password: hashPassword,
       role: role || "user",
     });
+
+    const verificationToken = JWT.sign(
+      { id: user._id },
+      process.env.EMAIL_TOKEN_SECRET,
+      {
+        expiresIn: "10m",
+      },
+    );
+
+    const verificationLink = `${process.env.BASE_URL}/api/auth/verify-email?token=${verificationToken}`;
+
+    try {
+      await sendEmail(
+        user.email,
+        "Email Verification",
+        `Please verify your email by clicking the following link: ${verificationLink}`,
+        `<p>Please verify your email by clicking the following link: <a href="${verificationLink}">Verify Email</a></p>`,
+      );
+    } catch (error) {
+      console.error("Error sending email:", error);
+
+      return res.status(500).json({
+        message: "User registered but failed to send verification email",
+      });
+    }
 
     return res.status(201).json({
       message: "User register successfully",
@@ -58,6 +84,12 @@ const loginController = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         message: "Invalid credentials",
+      });
+    }
+
+    if (!user.isVerified) {
+      return res.status(401).json({
+        message: "Please verify your email before logging in",
       });
     }
 
@@ -127,9 +159,49 @@ const logutController = async (req, res) => {
   }
 };
 
+const verifyController = async (req, res) => {
+  const token = req.query.token;
+
+  if (!token) {
+    return res.status(400).json({
+      message: "verification token is required",
+    });
+  }
+
+  try {
+    const decoded = await JWT.verify(token, process.env.EMAIL_TOKEN_SECRET);
+
+    const user = await userModel.findById(decoded.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (user.isVerified) {
+      return res.status(200).json({
+        message: "Email already verified",
+      });
+    }
+
+    user.isVerified = true;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Email verified successfully",
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: "Invalid or expired token",
+    });
+  }
+};
+
 module.exports = {
   registerController,
   loginController,
   getCurrentUserController,
   logutController,
+  verifyController,
 };
