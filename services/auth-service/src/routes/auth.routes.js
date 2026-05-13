@@ -5,6 +5,7 @@ const {
   loginController,
   getCurrentUserController,
   logutController,
+  verifyController,
 } = require("../controllers/auth.controler");
 const {
   registerUserValidations,
@@ -23,5 +24,7 @@ router.post("/logout", logutController);
 //GET API'secure
 
 router.get("/me", authMiddleware, getCurrentUserController);
+
+router.get("/verify-email", verifyController);
 
 module.exports = router;
