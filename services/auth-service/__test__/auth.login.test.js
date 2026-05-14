@@ -15,6 +15,7 @@ describe("POST /api/auth/login", () => {
       name: payload.name,
       email: payload.email,
       password: hash,
+      isVerified: true,
     });
 
     const res = await request(app)
@@ -26,7 +27,7 @@ describe("POST /api/auth/login", () => {
     expect(res.body.user.email).toBe(payload.email);
     expect(res.body.user.name).toBe(payload.name);
     expect(res.body.user.password).toBeUndefined();
-    
+
     const setCookie = res.headers["set-cookie"];
     expect(setCookie).toBeDefined();
     expect(setCookie.join(";")).toMatch(/accessToken=/);

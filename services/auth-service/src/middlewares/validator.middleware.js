@@ -54,7 +54,19 @@ const loginUserValidations = [
   respondWithValidationErrors,
 ];
 
+const resendVerifyValidation = [
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .bail()
+    .isEmail()
+    .withMessage("Invalid email address"),
+
+  respondWithValidationErrors,
+];
+
 module.exports = {
   registerUserValidations,
   loginUserValidations,
+  resendVerifyValidation,
 };

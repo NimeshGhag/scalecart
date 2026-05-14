@@ -1,5 +1,7 @@
 const request = require("supertest");
 const app = require("../src/app");
+const userModel = require("../src/models/user.model");
+
 
 describe("POST /api/auth/logout", () => {
   let cookies;
@@ -13,6 +15,11 @@ describe("POST /api/auth/logout", () => {
         password: "password123",
       })
       .expect(201);
+
+    await userModel.updateOne(
+      { email: "logout_user@example.com" },
+      { isVerified: true },
+    );
 
     const loginRes = await request(app)
       .post("/api/auth/login")
