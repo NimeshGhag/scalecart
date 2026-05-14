@@ -265,6 +265,52 @@ const resendVerifyController = async (req, res) => {
   }
 };
 
+const forgotPasswordController = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+
+    const user = await userModel.findOne({ email });
+
+    if (user) {
+      const forgotToken = JWT.sign(
+        { id: user._id },
+        process.env.FORGOT_TOKEN_SECRET,
+        {
+          expiresIn: "10m",
+        },
+      );
+
+      const restLink = `${process.env.BASE_URL}/api/auth/reset-password?token=${forgotToken}`;
+
+      try {
+        await sendEmail(
+          user.email,
+          "Reset password",
+          `Please reset your password by clicking the following link: ${restLink}`,
+          `<p>Please reset your password by clicking the following link: <a href="${restLink}">Reset Password</a></p>`,
+        );
+      } catch (error) {
+        console.error("Error sending email:", error);
+        return res.status(200).json({
+          message:
+            "If the email is registered, a password reset link has been sent",
+        });
+      }
+    }
+
+    return res.status(200).json({
+      message:
+        "If the email is registered, a password reset link has been sent",
+    });
+  } catch (error) {
+    console.error("Error in forgot password controller:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   registerController,
   loginController,
@@ -272,4 +318,5 @@ module.exports = {
   logutController,
   verifyController,
   resendVerifyController,
+  forgotPasswordController,
 };
