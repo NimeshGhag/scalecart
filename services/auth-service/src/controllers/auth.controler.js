@@ -43,8 +43,6 @@ const registerController = async (req, res) => {
         `<p>Please verify your email by clicking the following link: <a href="${verificationLink}">Verify Email</a></p>`,
       );
     } catch (error) {
-      console.error("Error sending email:", error);
-
       return res.status(500).json({
         message: "User registered but failed to send verification email",
       });
@@ -120,7 +118,6 @@ const loginController = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       message: "Internal server error",
     });
@@ -152,7 +149,6 @@ const logutController = async (req, res) => {
       message: "Logout successfully",
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       message: "Internal server error",
     });
@@ -252,12 +248,108 @@ const resendVerifyController = async (req, res) => {
         message: "Verification email resent successfully",
       });
     } catch (error) {
-      console.error("Error sending email:", error);
-
       return res.status(200).json({
         message: "Failed to send verification email",
       });
     }
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+const forgotPasswordController = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await userModel.findOne({ email });
+
+    if (user) {
+      const forgotToken = JWT.sign(
+        { id: user._id },
+        process.env.FORGOT_TOKEN_SECRET,
+        {
+          expiresIn: "10m",
+        },
+      );
+
+      const restLink = `${process.env.BASE_URL}/api/auth/reset-password?token=${forgotToken}`;
+
+      try {
+        await sendEmail(
+          user.email,
+          "Reset password",
+          `Please reset your password by clicking the following link: ${restLink}`,
+          `<p>Please reset your password by clicking the following link: <a href="${restLink}">Reset Password</a></p>`,
+        );
+      } catch (error) {
+        return res.status(200).json({
+          message:
+            "If the email is registered, a password reset link has been sent",
+        });
+      }
+    }
+
+    return res.status(200).json({
+      message:
+        "If the email is registered, a password reset link has been sent",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+const resetPasswordController = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res.status(400).json({
+      message: "Token and new password are required",
+    });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({
+      message: "Password must be at least 6 characters long",
+    });
+  }
+
+  try {
+    const decoded = await JWT.verify(token, process.env.FORGOT_TOKEN_SECRET);
+
+    if (!decoded.id) {
+      return res.status(400).json({
+        message: "Invalid token",
+      });
+    }
+
+    const user = await userModel.findById(decoded.id).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const samePassword = await bcrypt.compare(newPassword, user.password);
+
+    if (samePassword) {
+      return res.status(400).json({
+        message: "New password cannot be the same as the old password",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password reset successful. Please login again.",
+    });
   } catch (error) {
     return res.status(500).json({
       message: "Internal server error",
@@ -272,4 +364,6 @@ module.exports = {
   logutController,
   verifyController,
   resendVerifyController,
+  forgotPasswordController,
+  resetPasswordController,
 };

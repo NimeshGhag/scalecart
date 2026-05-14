@@ -7,11 +7,13 @@ const {
   logutController,
   verifyController,
   resendVerifyController,
+  forgotPasswordController,
+  resetPasswordController,
 } = require("../controllers/auth.controler");
 const {
   registerUserValidations,
   loginUserValidations,
-  resendVerifyValidation,
+  emailVerifyValidation,
 } = require("../middlewares/validator.middleware");
 
 const authMiddleware = require("../middlewares/auth.middleware");
@@ -23,7 +25,10 @@ router.post("/login", loginUserValidations, loginController);
 
 router.post("/logout", logutController);
 
-router.post("/resend-verification", resendVerifyValidation, resendVerifyController);
+router.post("/resend-verification", emailVerifyValidation, resendVerifyController);
+
+router.post("/forgot-password", emailVerifyValidation, forgotPasswordController);
+router.post ("/reset-password", resetPasswordController);
 
 //GET API'secure
 
