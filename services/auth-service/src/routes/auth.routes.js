@@ -9,6 +9,7 @@ const {
   resendVerifyController,
   forgotPasswordController,
   resetPasswordController,
+  refreshTokenController,
 } = require("../controllers/auth.controler");
 const {
   registerUserValidations,
@@ -29,6 +30,8 @@ router.post("/resend-verification", emailVerifyValidation, resendVerifyControlle
 
 router.post("/forgot-password", emailVerifyValidation, forgotPasswordController);
 router.post ("/reset-password", resetPasswordController);
+
+router.post("/refresh-token", refreshTokenController);
 
 //GET API'secure
 

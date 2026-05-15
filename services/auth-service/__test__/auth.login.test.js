@@ -31,6 +31,7 @@ describe("POST /api/auth/login", () => {
     const setCookie = res.headers["set-cookie"];
     expect(setCookie).toBeDefined();
     expect(setCookie.join(";")).toMatch(/accessToken=/);
+    expect(setCookie.join(";")).toMatch(/refreshToken=/);
   });
 
   it("rejects wrong password with 401", async () => {
