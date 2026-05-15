@@ -10,6 +10,7 @@ const {
   forgotPasswordController,
   resetPasswordController,
   refreshTokenController,
+  getAddressController,
 } = require("../controllers/auth.controler");
 const {
   registerUserValidations,
@@ -38,5 +39,6 @@ router.post("/refresh-token", refreshTokenController);
 router.get("/me", authMiddleware, getCurrentUserController);
 
 router.get("/verify-email", verifyController);
+router.get("/me/address",authMiddleware, getAddressController);
 
 module.exports = router;
