@@ -3,6 +3,8 @@ const bcrypt = require("bcryptjs");
 const JWT = require("jsonwebtoken");
 const redis = require("../db/redis");
 const { sendEmail } = require("../utils/email.service");
+const refreshTokenModel = require("../models/refreshToken.model");
+const { sendTokenResponse } = require("../utils/authLogin.helper");
 
 const registerController = async (req, res) => {
   const { name, email, password, role } = req.body;
@@ -91,32 +93,34 @@ const loginController = async (req, res) => {
       });
     }
 
-    const token = JWT.sign(
-      {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" },
-    );
+    // const token = JWT.sign(
+    //   {
+    //     id: user._id,
+    //     email: user.email,
+    //     role: user.role,
+    //   },
+    //   process.env.JWT_SECRET,
+    //   { expiresIn: "1d" },
+    // );
 
-    res.cookie("accessToken", token, {
-      httpOnly: true,
-      secure: true,
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+    // res.cookie("accessToken", token, {
+    //   httpOnly: true,
+    //   secure: true,
+    //   maxAge: 24 * 60 * 60 * 1000,
+    // });
 
-    return res.status(200).json({
-      message: "Logged in successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        addresses: user.addresses,
-      },
-    });
+    return sendTokenResponse(res, user);
+
+    // return res.status(200).json({
+    //   message: "Logged in successfully",
+    //   user: {
+    //     id: user._id,
+    //     name: user.name,
+    //     email: user.email,
+    //     role: user.role,
+    //     addresses: user.addresses,
+    //   },
+    // });
   } catch (error) {
     return res.status(500).json({
       message: "Internal server error",
@@ -134,15 +138,24 @@ const getCurrentUserController = async (req, res) => {
 
 const logutController = async (req, res) => {
   try {
-    const { accessToken } = req.cookies;
+    const { accessToken, refreshToken } = req.cookies;
 
     if (accessToken) {
       await redis.set(`blacklist${accessToken}`, true, "EX", 24 * 60 * 60);
+      await redis.set(`blacklist${refreshToken}`, true, "EX", 24 * 60 * 60);
     }
 
     res.clearCookie("accessToken", {
       httpOnly: true,
       secure: true,
+    });
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+    });
+    
+    await refreshTokenModel.findOneAndDelete({
+      token: req.cookies.refreshToken,
     });
 
     return res.status(200).json({
@@ -357,6 +370,44 @@ const resetPasswordController = async (req, res) => {
   }
 };
 
+const refreshTokenController = async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) {
+    return res.status(401).json({
+      message: "Refresh token is required",
+    });
+  }
+
+  try {
+    const decoded = JWT.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+    const refreshTokenInDb = await refreshTokenModel.findOne({
+      token: refreshToken,
+    });
+
+    if (!refreshTokenInDb) {
+      return res.status(401).json({
+        message: "Invalid refresh token",
+      });
+    }
+
+    const user = await userModel.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        message: "User not found ",
+      });
+    }
+
+    return sendTokenResponse(res, user, "Token refreshed successfully");
+  } catch (error) {
+    return res.status(401).json({
+      message: "Invalid or expired refresh token",
+    });
+  }
+};
+
 module.exports = {
   registerController,
   loginController,
@@ -366,4 +417,5 @@ module.exports = {
   resendVerifyController,
   forgotPasswordController,
   resetPasswordController,
+  refreshTokenController,
 };

@@ -2,6 +2,16 @@ const request = require("supertest");
 const app = require("../src/app");
 const userModel = require("../src/models/user.model");
 
+// Mock refresh token model because logout deletes the refresh token from DB
+jest.mock("../src/models/refreshToken.model", () => ({
+  findOneAndUpdate: jest.fn().mockResolvedValue({}), // used during login
+  findOneAndDelete: jest.fn().mockResolvedValue({}), // used during logout
+}));
+
+// Mock Redis because logout blacklists both access and refresh tokens
+jest.mock("../src/db/redis", () => ({
+  set: jest.fn().mockResolvedValue("OK"),
+}));
 
 describe("POST /api/auth/logout", () => {
   let cookies;
@@ -40,11 +50,20 @@ describe("POST /api/auth/logout", () => {
     const setCookie = res.headers["set-cookie"];
     expect(setCookie).toBeDefined();
     expect(setCookie.join(";")).toMatch(/accessToken=;/);
+    expect(setCookie.join(";")).toMatch(/refreshToken=;/);
   });
 
   it("returns 200 even when not authenticated", async () => {
     const res = await request(app).post("/api/auth/logout").expect(200);
 
     expect(res.body.message).toBeDefined();
+    const setCookie = res.headers["set-cookie"];
+    expect(setCookie).toBeDefined();
+
+    const cookieString = setCookie.join(";");
+
+    // Controller still clears cookies even if they don't exist
+    expect(cookieString).toMatch(/accessToken=;/);
+    expect(cookieString).toMatch(/refreshToken=;/);
   });
 });
