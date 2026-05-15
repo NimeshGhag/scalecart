@@ -65,8 +65,27 @@ const emailVerifyValidation = [
   respondWithValidationErrors,
 ];
 
+const addAddressValidation = [
+  body("street").notEmpty().withMessage("Street is required"),
+  body("city").notEmpty().withMessage("City is required"),
+  body("state").notEmpty().withMessage("State is required"),
+  body("zip")
+    .notEmpty()
+    .withMessage("zip is required")
+    .bail()
+    .isPostalCode("any")
+    .withMessage("Invalid zip format"),
+  body("country").notEmpty().withMessage("Country is required"),
+  body("isDefault")
+    .optional()
+    .isBoolean()
+    .withMessage("isDefault must be a boolean value"),
+  respondWithValidationErrors,
+];
+
 module.exports = {
   registerUserValidations,
   loginUserValidations,
   emailVerifyValidation,
+  addAddressValidation,
 };

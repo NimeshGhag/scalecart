@@ -411,12 +411,6 @@ const refreshTokenController = async (req, res) => {
 const getAddressController = async (req, res) => {
   const id = req.user.id;
 
-  if (!id) {
-    return res.status(400).json({
-      message: "User id is required",
-    });
-  }
-
   try {
     const user = await userModel.findById(id).select("address");
 
@@ -435,6 +429,44 @@ const getAddressController = async (req, res) => {
   }
 };
 
+const addAddressController = async (req, res) => {
+  const id = req.user.id;
+  const { street, city, state, zip, country, isDefault } = req.body;
+
+  try {
+    const user = await userModel.findOneAndUpdate(
+      { _id: id },
+      {
+        $push: {
+          address: {
+            street,
+            city,
+            state,
+            zip,
+            country,
+            isDefault,
+          },
+        },
+      },
+      { returnDocument: "after" },
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(201).json({
+      message: "Address added successfully",
+      address: user.address[user.address.length - 1],
+    });
+  } catch (error) {
+    console.error("Error adding address:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   registerController,
   loginController,
@@ -446,4 +478,5 @@ module.exports = {
   resetPasswordController,
   refreshTokenController,
   getAddressController,
+  addAddressController,
 };
