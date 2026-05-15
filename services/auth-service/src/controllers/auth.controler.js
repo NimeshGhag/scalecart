@@ -460,7 +460,51 @@ const addAddressController = async (req, res) => {
       address: user.address[user.address.length - 1],
     });
   } catch (error) {
-    console.error("Error adding address:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+const deleteAddressController = async (req, res) => {
+  const id = req.user.id;
+  const { addressId } = req.params;
+
+  const isAddressExist = await userModel.findOne({
+    _id: id,
+    "address._id": addressId,
+  });
+
+  if (!isAddressExist) {
+    return res.status(404).json({ message: "Address not found" });
+  }
+
+  try {
+    const user = await userModel.findOneAndUpdate(
+      { _id: id },
+      {
+        $pull: {
+          address: { _id: addressId },
+        },
+      },
+      { returnDocument: "after" },
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const addressExists = user.address.some(
+      (addr) => addr._id.toString() === addressId,
+    );
+    if (addressExists) {
+      return res.status(500).json({ message: "Failed to delete address" });
+    }
+
+    return res.status(200).json({
+      message: "Address deleted successfully",
+    });
+  } catch (error) {
     return res.status(500).json({
       message: "Internal server error",
     });
@@ -479,4 +523,5 @@ module.exports = {
   refreshTokenController,
   getAddressController,
   addAddressController,
+  deleteAddressController,
 };

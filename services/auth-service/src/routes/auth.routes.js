@@ -12,6 +12,7 @@ const {
   refreshTokenController,
   getAddressController,
   addAddressController,
+  deleteAddressController,
 } = require("../controllers/auth.controler");
 const {
   registerUserValidations,
@@ -45,5 +46,6 @@ router.get("/verify-email", verifyController);
 //API'S for user address
 router.get("/me/address", authMiddleware, getAddressController);
 router.post("/me/add-address", authMiddleware, addAddressValidation, addAddressController);
+router.delete("/me/delete-address/:addressId", authMiddleware, deleteAddressController);
 
 module.exports = router;
