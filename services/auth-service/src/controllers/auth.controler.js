@@ -93,34 +93,8 @@ const loginController = async (req, res) => {
       });
     }
 
-    // const token = JWT.sign(
-    //   {
-    //     id: user._id,
-    //     email: user.email,
-    //     role: user.role,
-    //   },
-    //   process.env.JWT_SECRET,
-    //   { expiresIn: "1d" },
-    // );
-
-    // res.cookie("accessToken", token, {
-    //   httpOnly: true,
-    //   secure: true,
-    //   maxAge: 24 * 60 * 60 * 1000,
-    // });
-
     return sendTokenResponse(res, user);
 
-    // return res.status(200).json({
-    //   message: "Logged in successfully",
-    //   user: {
-    //     id: user._id,
-    //     name: user.name,
-    //     email: user.email,
-    //     role: user.role,
-    //     addresses: user.addresses,
-    //   },
-    // });
   } catch (error) {
     return res.status(500).json({
       message: "Internal server error",
