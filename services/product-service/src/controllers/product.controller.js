@@ -1,4 +1,5 @@
 const productModel = require("../models/product.model");
+const { uploadImage } = require("../services/imagekit.service");
 
 const createProductController = async (req, res) => {
   try {
@@ -7,7 +8,6 @@ const createProductController = async (req, res) => {
       description,
       priceAmount,
       priceCurrency = "INR",
-      images,
     } = req.body;
 
     const price = {
@@ -22,6 +22,11 @@ const createProductController = async (req, res) => {
         message: "Seller not found",
       });
     }
+
+    const images = await Promise.all(
+      (req.files || []).map((file) => uploadImage({ buffer: file.buffer })),
+    );
+
     const product = await productModel.create({
       title,
       description,
@@ -35,6 +40,7 @@ const createProductController = async (req, res) => {
       product,
     });
   } catch (error) {
+    console.log(error)
     return res.status(500).json({
       message: "Internal server error",
     });
