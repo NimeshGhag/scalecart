@@ -2,9 +2,9 @@ const ImageKit = require("@imagekit/nodejs")
 const { v4: uuidv4 } = require("uuid");
 
 const imagekit = new ImageKit({
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY ,
-  publicKey: process.env.IMAGEKIT_PUBLIC_KEY ,
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT ,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY || "test_private_key",
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY || "test_public_key",
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || "https://ik.imagekit.io/test",
 });
 
 
