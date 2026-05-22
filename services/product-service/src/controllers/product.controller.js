@@ -8,6 +8,7 @@ const createProductController = async (req, res) => {
       description,
       priceAmount,
       priceCurrency = "INR",
+      catagory,
     } = req.body;
 
     const price = {
@@ -33,6 +34,7 @@ const createProductController = async (req, res) => {
       price,
       seller,
       images,
+      catagory,
     });
 
     return res.status(201).json({

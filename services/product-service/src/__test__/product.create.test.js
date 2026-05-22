@@ -31,7 +31,8 @@ describe("POST /api/products/create-product", () => {
       .field("title", "iPhone 15")
       .field("description", "Latest Apple smartphone")
       .field("priceAmount", "79999")
-      .field("priceCurrency", "INR");
+      .field("priceCurrency", "INR")
+      .field("catagory", "Electronics");
 
     expect(res.status).toBe(201);
     expect(res.body.product).toBeDefined();
@@ -42,6 +43,7 @@ describe("POST /api/products/create-product", () => {
     expect(res.body.product.seller).toBe(
       "6650f0c1e8f1a2b3c4d5e6f7"
     );
+    expect(res.body.product.catagory).toBe("Electronics");
   });
 
   it("validates missing fields with 400", async () => {
@@ -49,7 +51,8 @@ describe("POST /api/products/create-product", () => {
       .post("/api/products/create-product")
       .field("title", "")
       .field("description", "")
-      .field("priceAmount", "");
+      .field("priceAmount", "")
+      .field("catagory", "");
 
     expect(res.status).toBe(400);
     expect(res.body.errors).toBeDefined();
@@ -60,7 +63,8 @@ describe("POST /api/products/create-product", () => {
       .post("/api/products/create-product")
       .field("title", "Test Product")
       .field("description", "Test Description")
-      .field("priceAmount", "-100");
+      .field("priceAmount", "-100")
+      .field("catagory", "Electronics");
 
     expect(res.status).toBe(400);
     expect(res.body.errors).toBeDefined();
@@ -71,7 +75,8 @@ describe("POST /api/products/create-product", () => {
       .post("/api/products/create-product")
       .field("title", "MacBook Pro")
       .field("description", "Apple laptop")
-      .field("priceAmount", "199999");
+      .field("priceAmount", "199999")
+      .field("catagory", "Electronics");
 
     expect(res.status).toBe(201);
     expect(res.body.product.price.currency).toBe("INR");

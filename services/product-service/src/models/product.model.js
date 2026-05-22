@@ -34,7 +34,14 @@ const productSchema = new mongoose.Schema({
       id: String,
     },
   ],
+  catagory: {
+    type: String,
+    enum: ["Electronics","Books","Fashion"],
+    required: true,
+    trim: true,
+  },
 });
+productSchema.index({ title: "title", description: "description", catagory: "catagory" });
 
 const productModel = mongoose.model("product", productSchema);
 

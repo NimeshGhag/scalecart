@@ -36,6 +36,13 @@ const createProductValidation = [
     .isIn(["USD", "INR"])
     .withMessage("Currency must be either 'USD' or 'INR'."),
 
+  body("catagory")
+    .notEmpty()
+    .withMessage("Category is required.")
+    .bail()
+    .isIn(["Electronics", "Books", "Fashion"])
+    .withMessage("Category must be either 'Electronics', 'Books', or 'Fashion'."),
+
   resposeWithValidationErrors,
 ];
 
