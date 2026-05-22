@@ -6,6 +6,7 @@ const {
 } = require("../middlewares/validator.middleware");
 const {
   createProductController,
+  getProductsController,
 } = require("../controllers/product.controller");
 
 const router = express.Router();
@@ -19,5 +20,7 @@ router.post(
   createProductValidation,
   createProductController,
 );
+
+router.get("/",getProductsController);
 
 module.exports = router;

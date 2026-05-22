@@ -8,6 +8,7 @@ const createProductController = async (req, res) => {
       description,
       priceAmount,
       priceCurrency = "INR",
+      catagory,
     } = req.body;
 
     const price = {
@@ -33,6 +34,7 @@ const createProductController = async (req, res) => {
       price,
       seller,
       images,
+      catagory,
     });
 
     return res.status(201).json({
@@ -40,10 +42,85 @@ const createProductController = async (req, res) => {
       product,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({
       message: "Internal server error",
     });
   }
 };
-module.exports = { createProductController };
+
+const getProductsController = async (req, res) => {
+  try {
+    const {
+      q,
+      catagory,
+      minPrice,
+      maxPrice,
+      page = 1,
+      limit = 10,
+      sort,
+    } = req.query;
+
+    const filter = {};
+    if (q) {
+      filter.$text = { $search: q };
+    }
+
+    if (catagory) {
+      filter.catagory = catagory;
+    }
+
+    if (minPrice || maxPrice) {
+      filter["price.amount"] = {};
+      if (minPrice) {
+        filter["price.amount"].$gte = Number(minPrice);
+      }
+      if (maxPrice) {
+        filter["price.amount"].$lte = Number(maxPrice);
+      }
+    }
+
+    let sortOption = {};
+    switch (sort) {
+      case "price_asc":
+        sortOption = { "price.amount": 1 };
+        break;
+      case "price_desc":
+        sortOption = { "price.amount": -1 };
+        break;
+      case "newest":
+        sortOption = { createdAt: -1 };
+        break;
+      default:
+        sortOption = { createdAt: -1 };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const products = await productModel
+      .find(filter)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(Math.min(Number(limit), 10));
+
+    const totalProducts = await productModel.countDocuments(filter);
+
+    return res.status(200).json({
+      message: "Products retrieved",
+      products,
+      totalProducts,
+      totalPages: Math.ceil(totalProducts / limit),
+      currentPage: Number(page),
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+module.exports = {
+  createProductController,
+  getProductsController,
+};
