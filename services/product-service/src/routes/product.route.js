@@ -7,6 +7,7 @@ const {
 const {
   createProductController,
   getProductsController,
+  getProductByIdController,
 } = require("../controllers/product.controller");
 
 const router = express.Router();
@@ -22,5 +23,6 @@ router.post(
 );
 
 router.get("/",getProductsController);
+router.get("/:id",getProductByIdController);
 
 module.exports = router;
