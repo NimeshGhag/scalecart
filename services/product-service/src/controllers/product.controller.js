@@ -148,8 +148,59 @@ const getProductByIdController = async (req, res) => {
   }
 };
 
+const updateProductController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        message: "Invalid product ID",
+      });
+    }
+    const product = await productModel.findOne({
+      _id: id,
+    });
+
+    if(!product._id){
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+    if (product.seller.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Forbidden: You are not the seller of this product",
+      });
+    }
+
+    const allowedFields = ["title", "description", "priceAmount", "priceCurrency", "catagory"];
+    for (const field of allowedFields) {
+      if (req.body[field]!== undefined) {
+        if (field === "priceAmount" || field === "priceCurrency") {
+          if (!product.price) {
+            product.price = {};
+          }
+          if (field === "priceAmount") {
+            product.price.amount = Number(req.body.priceAmount);
+          } else {
+            product.price.currency = req.body.priceCurrency;
+          }
+        } else {
+          product[field] = req.body[field];
+        }
+      }
+    }
+
+    await product.save();
+
+    return res.status(200).json({
+      message: "Product updated",
+      product,
+    });
+  } catch (error) {}
+};
+
 module.exports = {
   createProductController,
   getProductsController,
   getProductByIdController,
+  updateProductController,
 };
