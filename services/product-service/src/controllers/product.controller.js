@@ -10,6 +10,7 @@ const createProductController = async (req, res) => {
       priceAmount,
       priceCurrency = "INR",
       catagory,
+      stockQuantity,
     } = req.body;
 
     const price = {
@@ -36,6 +37,9 @@ const createProductController = async (req, res) => {
       seller,
       images,
       catagory,
+      stock: {
+        quantity: Number(stockQuantity) || 0,
+      },
     });
 
     return res.status(201).json({
@@ -160,7 +164,7 @@ const updateProductController = async (req, res) => {
       _id: id,
     });
 
-    if(!product._id){
+    if (!product._id) {
       return res.status(404).json({
         message: "Product not found",
       });
@@ -170,10 +174,15 @@ const updateProductController = async (req, res) => {
         message: "Forbidden: You are not the seller of this product",
       });
     }
-
-    const allowedFields = ["title", "description", "priceAmount", "priceCurrency", "catagory"];
+    const allowedFields = [
+      "title",
+      "description",
+      "priceAmount",
+      "priceCurrency",
+      "catagory",
+    ];
     for (const field of allowedFields) {
-      if (req.body[field]!== undefined) {
+      if (req.body[field] !== undefined) {
         if (field === "priceAmount" || field === "priceCurrency") {
           if (!product.price) {
             product.price = {};
@@ -195,8 +204,15 @@ const updateProductController = async (req, res) => {
       message: "Product updated",
       product,
     });
-  } catch (error) {}
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
 };
+
+
 
 module.exports = {
   createProductController,
