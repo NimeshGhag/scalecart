@@ -1,13 +1,12 @@
-const ImageKit = require("@imagekit/nodejs")
+const ImageKit = require("@imagekit/nodejs");
 const { v4: uuidv4 } = require("uuid");
 
 const imagekit = new ImageKit({
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY || "test_private_key",
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY || "test_public_key",
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || "https://ik.imagekit.io/test",
+  urlEndpoint:
+    process.env.IMAGEKIT_URL_ENDPOINT || "https://ik.imagekit.io/test",
 });
-
-
 
 const uploadImage = async ({ buffer, folder = "/scale-cart/products" }) => {
   const res = await imagekit.files.upload({
@@ -22,7 +21,12 @@ const uploadImage = async ({ buffer, folder = "/scale-cart/products" }) => {
   };
 };
 
+const deleteImage = async (fileId) => {
+  return await imagekit.files.delete(fileId);
+};
+
 module.exports = {
   imagekit,
   uploadImage,
+  deleteImage,
 };
