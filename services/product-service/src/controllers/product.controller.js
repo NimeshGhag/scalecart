@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const productModel = require("../models/product.model");
 const { uploadImage } = require("../services/imagekit.service");
+const { getStockStatus } = require("../utils/stock.utils");
 
 const createProductController = async (req, res) => {
   try {
@@ -10,6 +11,7 @@ const createProductController = async (req, res) => {
       priceAmount,
       priceCurrency = "INR",
       catagory,
+      stockQuantity,
     } = req.body;
 
     const price = {
@@ -36,6 +38,9 @@ const createProductController = async (req, res) => {
       seller,
       images,
       catagory,
+      stock: {
+        quantity: Number(stockQuantity) || 0,
+      },
     });
 
     return res.status(201).json({
@@ -160,7 +165,7 @@ const updateProductController = async (req, res) => {
       _id: id,
     });
 
-    if(!product._id){
+    if (!product._id) {
       return res.status(404).json({
         message: "Product not found",
       });
@@ -170,10 +175,15 @@ const updateProductController = async (req, res) => {
         message: "Forbidden: You are not the seller of this product",
       });
     }
-
-    const allowedFields = ["title", "description", "priceAmount", "priceCurrency", "catagory"];
+    const allowedFields = [
+      "title",
+      "description",
+      "priceAmount",
+      "priceCurrency",
+      "catagory",
+    ];
     for (const field of allowedFields) {
-      if (req.body[field]!== undefined) {
+      if (req.body[field] !== undefined) {
         if (field === "priceAmount" || field === "priceCurrency") {
           if (!product.price) {
             product.price = {};
@@ -195,7 +205,43 @@ const updateProductController = async (req, res) => {
       message: "Product updated",
       product,
     });
-  } catch (error) {}
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+const getSellerProductsController = async (req, res) => {
+  try {
+    const sellerId = req.user.id;
+
+    const { skip = 0, limit = 10 } = req.query;
+
+    const products = await productModel
+      .find({ seller: sellerId })
+      .skip(Number(skip))
+      .limit(Math.min(Number(limit), 10));
+
+    const formattedProducts = products.map((product) => {
+      return {
+        ...product.toObject(),
+
+        stockStatus: getStockStatus(product.stock.quantity),
+      };
+    });
+    return res.status(200).json({
+      message: "Seller products retrieved",
+      products: formattedProducts,
+      totalProducts: formattedProducts.length,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
 };
 
 module.exports = {
@@ -203,4 +249,5 @@ module.exports = {
   getProductsController,
   getProductByIdController,
   updateProductController,
+  getSellerProductsController,
 };
