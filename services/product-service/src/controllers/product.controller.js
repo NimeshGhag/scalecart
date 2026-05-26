@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const productModel = require("../models/product.model");
-const { uploadImage } = require("../services/imagekit.service");
+const { uploadImage, deleteImage } = require("../services/imagekit.service");
 const { getStockStatus } = require("../utils/stock.utils");
 
 const createProductController = async (req, res) => {
@@ -244,10 +244,52 @@ const getSellerProductsController = async (req, res) => {
   }
 };
 
+const deleteProductController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        message: "Invalid product ID",
+      });
+    }
+
+    const product = await productModel.findOne({
+      _id: id,
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    if (product.seller.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Forbidden: You are not the seller of this product",
+      });
+    }
+    if (product.images?.length > 0) {
+      await Promise.all(product.images.map((image) => deleteImage(image.id)));
+    }
+
+    await product.deleteOne();
+
+    return res.status(200).json({
+      message: "Product deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   createProductController,
   getProductsController,
   getProductByIdController,
   updateProductController,
   getSellerProductsController,
+  deleteProductController,
 };

@@ -11,6 +11,7 @@ const {
   getProductByIdController,
   updateProductController,
   getSellerProductsController,
+  deleteProductController
 } = require("../controllers/product.controller");
 
 const router = express.Router();
@@ -40,5 +41,8 @@ router.patch(
   updateProductValidation,
   updateProductController,
 );
+
+  
+router.delete("/:id",createAuthMiddleware(["admin", "seller"]),deleteProductController)
 
 module.exports = router;
