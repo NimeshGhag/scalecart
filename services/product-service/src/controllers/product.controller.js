@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const productModel = require("../models/product.model");
 const { uploadImage } = require("../services/imagekit.service");
+const { getStockStatus } = require("../utils/stock.utils");
 
 const createProductController = async (req, res) => {
   try {
@@ -212,11 +213,41 @@ const updateProductController = async (req, res) => {
   }
 };
 
+const getSellerProductsController = async (req, res) => {
+  try {
+    const sellerId = req.user.id;
 
+    const { skip = 0, limit = 10 } = req.query;
+
+    const products = await productModel
+      .find({ seller: sellerId })
+      .skip(Number(skip))
+      .limit(Math.min(Number(limit), 10));
+
+    const formattedProducts = products.map((product) => {
+      return {
+        ...product.toObject(),
+
+        stockStatus: getStockStatus(product.stock.quantity),
+      };
+    });
+    return res.status(200).json({
+      message: "Seller products retrieved",
+      products: formattedProducts,
+      totalProducts: formattedProducts.length,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
 
 module.exports = {
   createProductController,
   getProductsController,
   getProductByIdController,
   updateProductController,
+  getSellerProductsController,
 };

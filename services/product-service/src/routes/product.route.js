@@ -3,13 +3,14 @@ const multer = require("multer");
 const createAuthMiddleware = require("../middlewares/auth.middleware");
 const {
   createProductValidation,
-  updateProductValidation
+  updateProductValidation,
 } = require("../middlewares/validator.middleware");
 const {
   createProductController,
   getProductsController,
   getProductByIdController,
   updateProductController,
+  getSellerProductsController,
 } = require("../controllers/product.controller");
 
 const router = express.Router();
@@ -22,6 +23,12 @@ router.post(
   upload.array("images", 5),
   createProductValidation,
   createProductController,
+);
+
+router.get(
+  "/seller",
+  createAuthMiddleware(["seller"]),
+  getSellerProductsController,
 );
 
 router.get("/", getProductsController);
